@@ -1,0 +1,17 @@
+topology: topol.tpr
+trajectory: traj.xtc
+mobile: "resname MN"
+output: mn_sites.csv
+cutoff: 8.0
+start:
+stop:
+step:
+targets:
+  - label: G22
+    selection: "nucleic and resid 22 and name P"
+  - label: patch_61_66
+    selection: "nucleic and resid 61-66 and name P"
+  - label: site_64_65
+    selection: "nucleic and resid 64-65 and name P"
+  - label: site_75_77
+    selection: "nucleic and resid 75-77 and name P"
