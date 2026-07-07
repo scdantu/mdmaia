@@ -29,10 +29,11 @@ def density_from_table(
         raise ValueError("No coordinates available for density calculation.")
 
     if radius is None:
-        max_abs = np.ceil(np.max(np.abs(coords)) / spacing) * spacing
-        radius = float(max_abs)
-
-    edges = tuple(np.arange(-radius, radius + spacing, spacing) for _ in range(3))
+        mins = np.floor((coords.min(axis=0) - spacing) / spacing) * spacing
+        maxs = np.ceil((coords.max(axis=0) + spacing) / spacing) * spacing
+        edges = tuple(np.arange(mins[i], maxs[i] + spacing, spacing) for i in range(3))
+    else:
+        edges = tuple(np.arange(-radius, radius + spacing, spacing) for _ in range(3))
     grid, edges_out = np.histogramdd(coords, bins=edges)
     if normalize and grid.sum() > 0:
         grid = grid / grid.sum()
