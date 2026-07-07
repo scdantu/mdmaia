@@ -168,12 +168,16 @@ def build_parser() -> argparse.ArgumentParser:
     export_pymol.add_argument("--density", required=True, help="OpenDX density file")
     export_pymol.add_argument("--output", "-o", required=True, help="Output .pml file")
     export_pymol.add_argument("--level", type=float, default=0.01, help="Isomesh level")
+    export_pymol.add_argument("--contacts", default=None, help="Optional contact-dot PDB")
+    export_pymol.add_argument("--sites", default=None, help="Optional clustered-site PDB")
     export_pymol.set_defaults(
         func=lambda args: write_pymol_density_script(
             args.structure,
             args.density,
             args.output,
             mesh_level=args.level,
+            contact_pdb=args.contacts,
+            sites_pdb=args.sites,
         )
     )
 

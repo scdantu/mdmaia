@@ -15,6 +15,8 @@ def write_pymol_density_script(
     output: str,
     mesh_level: float = 0.01,
     object_name: str = "mdmaia_density",
+    contact_pdb: str | None = None,
+    sites_pdb: str | None = None,
 ) -> None:
     """Write a simple PyMOL script for viewing a density map."""
 
@@ -25,10 +27,29 @@ load {structure}, structure
 load {density}, {object_name}
 hide everything
 show cartoon, structure
+show spheres, structure and resn MN
+set sphere_scale, 0.35, structure and resn MN
 isomesh {object_name}_mesh, {object_name}, {mesh_level}
 color marine, structure
+color tv_orange, structure and resn MN
 color tv_orange, {object_name}_mesh
 set mesh_width, 0.5
+"""
+    if contact_pdb:
+        text += f"""\
+load {contact_pdb}, contact_dots
+show spheres, contact_dots
+set sphere_scale, 0.12, contact_dots
+spectrum b, blue_white_red, contact_dots
+"""
+    if sites_pdb:
+        text += f"""\
+load {sites_pdb}, clustered_sites
+show spheres, clustered_sites
+set sphere_scale, 0.45, clustered_sites
+color yellow, clustered_sites
+"""
+    text += """\
 orient all
 zoom all, 5
 """
