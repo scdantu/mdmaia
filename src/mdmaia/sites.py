@@ -89,6 +89,7 @@ def _radius_cluster(coords: np.ndarray, eps: float, min_samples: int) -> np.ndar
 
         labels[i] = cluster_id
         seeds = list(neighbours[i])
+        seed_set = set(seeds)
         cursor = 0
         while cursor < len(seeds):
             j = seeds[cursor]
@@ -96,8 +97,9 @@ def _radius_cluster(coords: np.ndarray, eps: float, min_samples: int) -> np.ndar
                 visited[j] = True
                 if len(neighbours[j]) >= min_samples:
                     for candidate in neighbours[j]:
-                        if candidate not in seeds:
+                        if candidate not in seed_set:
                             seeds.append(candidate)
+                            seed_set.add(candidate)
             if labels[j] == -1:
                 labels[j] = cluster_id
             cursor += 1
