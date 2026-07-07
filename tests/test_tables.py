@@ -1,5 +1,6 @@
 import pandas as pd
 
+from mdmaia.collect import COLLECT_COLUMNS
 from mdmaia.features import frame_features
 from mdmaia.sites import cluster_sites
 from mdmaia.states import classify_distance_states, state_summary
@@ -30,6 +31,18 @@ def test_residence_times_splits_gaps():
     assert list(a["duration_ps"]) == [20.0, 10.0]
 
 
+def test_residence_times_infers_stride():
+    df = pd.DataFrame(
+        [
+            {"frame": 0, "target_label": "A", "mobile_index": 1},
+            {"frame": 100, "target_label": "A", "mobile_index": 1},
+            {"frame": 300, "target_label": "A", "mobile_index": 1},
+        ]
+    )
+    res = residence_times(df, frame_step_ps=2000.0)
+    assert list(res["n_frames"]) == [2, 1]
+
+
 def test_frame_features():
     feat = frame_features(toy_table())
     assert set(["frame", "n_mobile", "min_distance"]).issubset(feat.columns)
@@ -54,3 +67,8 @@ def test_site_clustering():
     )
     sites = cluster_sites(df, eps=0.3, min_samples=2)
     assert len(sites) == 2
+
+
+def test_empty_collect_table_has_schema():
+    df = pd.DataFrame([], columns=COLLECT_COLUMNS)
+    assert list(df.columns) == COLLECT_COLUMNS

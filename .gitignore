@@ -1,0 +1,20 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# MDAnalysis trajectory offset caches
+*.xtc_offsets.npz
+*.xtc_offsets.lock
+
+# Large trajectories should stay local or be handled by Git LFS.
+*.xtc
+
+# Generated example outputs
+examples/*_sites.csv
+examples/*_stats.csv
+examples/*_coocc*.csv
+examples/*_residence.csv
+examples/*_features.csv
+examples/*.dx
+examples/*.npy
+examples/*.pml

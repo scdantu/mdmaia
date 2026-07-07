@@ -9,6 +9,22 @@ import pandas as pd
 from .io import write_table
 from .pbc import Box, distances, nearest_image_vector
 
+COLLECT_COLUMNS = [
+    "frame",
+    "time_ps",
+    "target_label",
+    "target_selection",
+    "mobile_selection",
+    "mobile_index",
+    "mobile_resid",
+    "mobile_resname",
+    "mobile_name",
+    "x",
+    "y",
+    "z",
+    "distance",
+]
+
 
 @dataclass
 class CollectConfig:
@@ -74,7 +90,7 @@ def collect_local_positions(config: CollectConfig) -> pd.DataFrame:
                 }
             )
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(rows, columns=COLLECT_COLUMNS)
     if config.output:
         write_table(df, config.output)
     return df

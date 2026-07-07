@@ -1,7 +1,7 @@
-topology: AF-RadDz3-Mn-01.pdb
-trajectory: NJ-1-AF-RadDz3-Mn-01.xtc
+topology: AF-RadDz3-Mn-50.pdb
+trajectory: NJ-1-AF-RadDz3-Mn-50.xtc
 mobile: "resname MN"
-output: mn1_sites.csv
+output: mn50_sites.csv
 cutoff: 8.0
 start:
 stop:

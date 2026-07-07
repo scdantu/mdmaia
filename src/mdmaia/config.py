@@ -38,6 +38,8 @@ def read_config(path: str | Path) -> dict[str, Any]:
 
 
 def parse_collection_config(path: str | Path) -> CollectionWorkflow:
+    path = Path(path)
+    base_dir = path.parent
     data = read_config(path)
     targets = [
         TargetSite(
@@ -48,15 +50,22 @@ def parse_collection_config(path: str | Path) -> CollectionWorkflow:
         for item in data["targets"]
     ]
     return CollectionWorkflow(
-        topology=str(data["topology"]),
-        trajectory=str(data["trajectory"]),
+        topology=str(_resolve_path(base_dir, data["topology"])),
+        trajectory=str(_resolve_path(base_dir, data["trajectory"])),
         mobile=str(data["mobile"]),
         targets=targets,
-        output=str(data["output"]),
+        output=str(_resolve_path(base_dir, data["output"])),
         start=data.get("start"),
         stop=data.get("stop"),
         step=data.get("step"),
     )
+
+
+def _resolve_path(base_dir: Path, value: str | Path) -> Path:
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return base_dir / path
 
 
 def collect_from_config(path: str | Path) -> pd.DataFrame:
@@ -76,6 +85,11 @@ def collect_from_config(path: str | Path) -> pd.DataFrame:
             target_label=target.label,
         )
         frames.append(collect_local_positions(config))
-    result = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    non_empty = [frame for frame in frames if not frame.empty]
+    result = (
+        pd.concat(non_empty, ignore_index=True)
+        if non_empty
+        else pd.DataFrame(columns=frames[0].columns if frames else None)
+    )
     write_table(result, workflow.output)
     return result

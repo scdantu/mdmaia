@@ -119,7 +119,11 @@ def conditional_occupancy(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def residence_times(df: pd.DataFrame, frame_step_ps: float | None = None) -> pd.DataFrame:
+def residence_times(
+    df: pd.DataFrame,
+    frame_step_ps: float | None = None,
+    frame_stride: int | None = None,
+) -> pd.DataFrame:
     """Consecutive occupied-frame runs per target and mobile object."""
 
     if df.empty:
@@ -134,40 +138,52 @@ def residence_times(df: pd.DataFrame, frame_step_ps: float | None = None) -> pd.
             ]
         )
 
+    if frame_stride is None:
+        frame_stride = _infer_frame_stride(df["frame"])
+
     rows = []
     for (target, mobile), group in df.groupby(["target_label", "mobile_index"], observed=True):
         frames = sorted(set(int(x) for x in group["frame"]))
         if not frames:
             continue
         start = prev = frames[0]
+        n_observed = 1
         for frame in frames[1:]:
-            if frame == prev + 1:
+            if frame == prev + frame_stride:
                 prev = frame
+                n_observed += 1
                 continue
-            n = prev - start + 1
             rows.append(
                 {
                     "target_label": target,
                     "mobile_index": mobile,
                     "start_frame": start,
                     "end_frame": prev,
-                    "n_frames": n,
-                    "duration_ps": None if frame_step_ps is None else n * frame_step_ps,
+                    "n_frames": n_observed,
+                    "duration_ps": None if frame_step_ps is None else n_observed * frame_step_ps,
                 }
             )
             start = prev = frame
-        n = prev - start + 1
+            n_observed = 1
         rows.append(
             {
                 "target_label": target,
                 "mobile_index": mobile,
                 "start_frame": start,
                 "end_frame": prev,
-                "n_frames": n,
-                "duration_ps": None if frame_step_ps is None else n * frame_step_ps,
+                "n_frames": n_observed,
+                "duration_ps": None if frame_step_ps is None else n_observed * frame_step_ps,
             }
         )
     return pd.DataFrame(rows)
+
+
+def _infer_frame_stride(frames: pd.Series) -> int:
+    unique_frames = sorted(set(int(x) for x in frames))
+    if len(unique_frames) < 2:
+        return 1
+    diffs = [b - a for a, b in zip(unique_frames[:-1], unique_frames[1:]) if b > a]
+    return min(diffs) if diffs else 1
 
 
 def stats_file(input_path: str, output_path: str) -> pd.DataFrame:
@@ -195,7 +211,12 @@ def conditional_file(input_path: str, output_path: str) -> pd.DataFrame:
     return result
 
 
-def residence_file(input_path: str, output_path: str, frame_step_ps: float | None = None) -> pd.DataFrame:
-    result = residence_times(read_table(input_path), frame_step_ps=frame_step_ps)
+def residence_file(
+    input_path: str,
+    output_path: str,
+    frame_step_ps: float | None = None,
+    frame_stride: int | None = None,
+) -> pd.DataFrame:
+    result = residence_times(read_table(input_path), frame_step_ps=frame_step_ps, frame_stride=frame_stride)
     write_table(result, output_path)
     return result

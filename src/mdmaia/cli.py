@@ -84,8 +84,19 @@ def build_parser() -> argparse.ArgumentParser:
     residence.add_argument("--input", "-i", required=True, help="Input CSV/Parquet table")
     residence.add_argument("--output", "-o", required=True, help="Output CSV/Parquet table")
     residence.add_argument("--frame-step-ps", type=float, default=None, help="Time per analysed frame")
+    residence.add_argument(
+        "--frame-stride",
+        type=int,
+        default=None,
+        help="Frame-number stride for consecutive residence events; inferred if omitted",
+    )
     residence.set_defaults(
-        func=lambda args: residence_file(args.input, args.output, args.frame_step_ps)
+        func=lambda args: residence_file(
+            args.input,
+            args.output,
+            args.frame_step_ps,
+            args.frame_stride,
+        )
     )
 
     features = sub.add_parser("features", help="Generate frame-wise ML-ready features")

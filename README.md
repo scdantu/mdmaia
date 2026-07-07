@@ -114,6 +114,11 @@ Run:
 mdmaia collect-config --config examples/mn_dna.yaml
 ```
 
+The example YAML files expect local GROMACS `.xtc` trajectories in the
+`examples/` directory. Trajectory files are intentionally ignored by Git because
+they are usually large; use Git LFS or an external data archive for distributing
+full example trajectories.
+
 Then analyse co-occupancy and residence:
 
 ```bash
