@@ -8,6 +8,10 @@ __pycache__/
 
 # Large trajectories should stay local or be handled by Git LFS.
 *.xtc
+*.pdb
+
+# Local scratch/output directory
+tmp/
 
 # Generated example outputs
 examples/*_sites.csv

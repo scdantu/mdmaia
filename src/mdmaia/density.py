@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from .io import read_table, write_dx
+from .io import read_table, write_cube, write_dx
 
 
 @dataclass
@@ -49,5 +49,8 @@ def density_file(
 ) -> DensityResult:
     df = read_table(input_path)
     result = density_from_table(df, spacing=spacing, radius=radius, normalize=normalize)
-    write_dx(result.grid, result.origin, result.spacing, output_path)
+    if str(output_path).lower().endswith(".cube"):
+        write_cube(result.grid, result.origin, result.spacing, output_path)
+    else:
+        write_dx(result.grid, result.origin, result.spacing, output_path)
     return result

@@ -58,3 +58,39 @@ def write_site_pdb(sites: pd.DataFrame, output: str, resname: str = "SIT") -> No
 
 def site_pdb_file(input_path: str, output_path: str) -> None:
     write_site_pdb(read_table(input_path), output_path)
+
+
+def write_contact_pdb(
+    contacts: pd.DataFrame,
+    output: str,
+    resname: str = "DOT",
+    bfactor_column: str = "distance",
+) -> None:
+    """Write each contact/local-coordinate record as a pseudoatom PDB dot.
+
+    The local coordinates ``x,y,z`` are written directly. The B-factor stores
+    ``bfactor_column`` if present, which is useful for colouring in VMD/PyMOL.
+    """
+
+    lines = []
+    for i, row in contacts.reset_index(drop=True).iterrows():
+        b = float(row[bfactor_column]) if bfactor_column in contacts.columns else 0.0
+        resid = int(i % 9999) + 1
+        lines.append(
+            "HETATM{atom_id:5d}  X   {resname:>3s} A{resid:4d}    "
+            "{x:8.3f}{y:8.3f}{z:8.3f}  1.00{b:6.2f}           X\n".format(
+                atom_id=(i % 99999) + 1,
+                resname=resname,
+                resid=resid,
+                x=float(row["x"]),
+                y=float(row["y"]),
+                z=float(row["z"]),
+                b=b,
+            )
+        )
+    lines.append("END\n")
+    Path(output).write_text("".join(lines))
+
+
+def contact_pdb_file(input_path: str, output_path: str, bfactor_column: str = "distance") -> None:
+    write_contact_pdb(read_table(input_path), output_path, bfactor_column=bfactor_column)

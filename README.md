@@ -164,6 +164,25 @@ mdmaia export-sites \
   --output mn_hotspots.pdb
 ```
 
+Export every contact as a pseudoatom dot for VMD/PyMOL:
+
+```bash
+mdmaia export-contacts \
+  --input mn_sites.csv \
+  --output mn_contact_dots.pdb \
+  --bfactor-column distance
+```
+
+Generate a Gaussian cube density map for VMD:
+
+```bash
+mdmaia density \
+  --input mn_sites.csv \
+  --spacing 0.5 \
+  --radius 8.0 \
+  --output mn_density.cube
+```
+
 Generate PyMOL helper script:
 
 ```bash
@@ -215,6 +234,7 @@ mdmaia merge-conditions
 mdmaia compare-occupancy
 mdmaia export-pymol
 mdmaia export-sites
+mdmaia export-contacts
 mdmaia plot-occupancy
 mdmaia plot-cooccupancy
 ```

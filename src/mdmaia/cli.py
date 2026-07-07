@@ -8,7 +8,7 @@ from .compare import compare_occupancy_file, merge_condition_tables
 from .config import collect_from_config
 from .collect import collect_from_args
 from .density import density_file
-from .export import site_pdb_file, write_pymol_density_script
+from .export import contact_pdb_file, site_pdb_file, write_pymol_density_script
 from .features import features_file
 from .plot import plot_cooccupancy, plot_occupancy, write_feature_matrix
 from .sites import cluster_sites_file
@@ -181,6 +181,18 @@ def build_parser() -> argparse.ArgumentParser:
     export_sites.add_argument("--input", "-i", required=True, help="Sites table")
     export_sites.add_argument("--output", "-o", required=True, help="Output PDB file")
     export_sites.set_defaults(func=lambda args: site_pdb_file(args.input, args.output))
+
+    export_contacts = sub.add_parser("export-contacts", help="Write contact dots as pseudoatom PDB")
+    export_contacts.add_argument("--input", "-i", required=True, help="Contact table")
+    export_contacts.add_argument("--output", "-o", required=True, help="Output PDB file")
+    export_contacts.add_argument(
+        "--bfactor-column",
+        default="distance",
+        help="Column to store in PDB B-factor",
+    )
+    export_contacts.set_defaults(
+        func=lambda args: contact_pdb_file(args.input, args.output, args.bfactor_column)
+    )
 
     plot_occ = sub.add_parser("plot-occupancy", help="Plot occupancy bar graph")
     plot_occ.add_argument("--input", "-i", required=True, help="Occupancy table")
