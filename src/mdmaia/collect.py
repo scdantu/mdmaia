@@ -24,6 +24,8 @@ COLLECT_COLUMNS = [
     "y",
     "z",
     "distance",
+    "condition",
+    "replica",
 ]
 
 
@@ -41,6 +43,8 @@ class CollectConfig:
     target_label: str = "target"
     coordinates: str = "local"
     align_selection: str | None = None
+    condition: str | None = None
+    replica: str | None = None
 
 
 def collect_local_positions(config: CollectConfig) -> pd.DataFrame:
@@ -112,6 +116,8 @@ def collect_local_positions(config: CollectConfig) -> pd.DataFrame:
                     "y": float(coord[1]),
                     "z": float(coord[2]),
                     "distance": float(dist),
+                    "condition": config.condition,
+                    "replica": config.replica,
                 }
             )
 
@@ -135,6 +141,8 @@ def collect_from_args(args) -> pd.DataFrame:
         target_label=args.target_label,
         coordinates=args.coordinates,
         align_selection=args.align_selection,
+        condition=args.condition,
+        replica=args.replica,
     )
     return collect_local_positions(config)
 

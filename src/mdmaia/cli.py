@@ -51,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="MDAnalysis selection used to align each frame to the first frame",
     )
+    collect.add_argument("--condition", default=None, help="Condition label to store in output")
+    collect.add_argument("--replica", default=None, help="Replica label to store in output")
     collect.add_argument("--output", "-o", required=True, help="Output CSV or Parquet table")
     collect.set_defaults(func=collect_from_args)
 
@@ -107,12 +109,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Frame-number stride for consecutive residence events; inferred if omitted",
     )
+    residence.add_argument(
+        "--site-level",
+        action="store_true",
+        help="Ignore mobile identity and measure continuous site occupancy by any mobile object",
+    )
     residence.set_defaults(
         func=lambda args: residence_file(
             args.input,
             args.output,
             args.frame_step_ps,
             args.frame_stride,
+            by_mobile=not args.site_level,
         )
     )
 

@@ -136,6 +136,37 @@ mdmaia residence \
   --output mn_sites_residence.csv
 ```
 
+For ions such as Mn²⁺, the site-level residence mode is often the more
+meaningful default: the site is considered occupied if any equivalent ion is
+present, regardless of whether the same ion identity remains there.
+
+```bash
+mdmaia residence \
+  --input mn_sites.csv \
+  --site-level \
+  --frame-step-ps 20 \
+  --output mn_sites_site_residence.csv
+```
+
+Cluster contact dots and compute site-level residence per spatial hotspot:
+
+```bash
+mdmaia sites \
+  --input mn_sites_aligned.csv \
+  --eps 2.5 \
+  --min-samples 10 \
+  --output mn_clusters.csv \
+  --assign-output mn_contacts_assigned.csv
+
+mdmaia cluster-stats \
+  --input mn_contacts_assigned.csv \
+  --frame-step-ps 20 \
+  --output mn_cluster_residence.csv
+```
+
+If `condition` and `replica` columns are present, statistics are calculated
+within each condition/replica rather than pooling all rows.
+
 Classify simple interaction states:
 
 ```bash

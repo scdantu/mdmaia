@@ -4,7 +4,13 @@ from mdmaia.collect import COLLECT_COLUMNS
 from mdmaia.features import frame_features
 from mdmaia.sites import assign_clusters, cluster_sites
 from mdmaia.states import classify_distance_states, state_summary
-from mdmaia.stats import cluster_residence_summary, cooccupancy_matrix, residence_times
+from mdmaia.stats import (
+    cluster_residence_summary,
+    cooccupancy_matrix,
+    occupancy_by_target,
+    residence_times,
+    site_residence_times,
+)
 
 
 def toy_table():
@@ -41,6 +47,31 @@ def test_residence_times_infers_stride():
     )
     res = residence_times(df, frame_step_ps=2000.0)
     assert list(res["n_frames"]) == [2, 1]
+
+
+def test_site_residence_ignores_mobile_identity():
+    df = pd.DataFrame(
+        [
+            {"frame": 0, "target_label": "A", "mobile_index": 1},
+            {"frame": 100, "target_label": "A", "mobile_index": 2},
+            {"frame": 200, "target_label": "A", "mobile_index": 3},
+        ]
+    )
+    ion_specific = residence_times(df, frame_step_ps=2000.0)
+    site_level = site_residence_times(df, frame_step_ps=2000.0)
+    assert list(ion_specific["n_frames"]) == [1, 1, 1]
+    assert list(site_level["n_frames"]) == [3]
+    assert list(site_level["duration_ps"]) == [6000.0]
+
+
+def test_occupancy_preserves_condition_replica_metadata():
+    df = toy_table()
+    df["condition"] = "condA"
+    df["replica"] = "rep1"
+    occ = occupancy_by_target(df)
+    assert {"condition", "replica"}.issubset(occ.columns)
+    assert set(occ["condition"]) == {"condA"}
+    assert set(occ["replica"]) == {"rep1"}
 
 
 def test_frame_features():

@@ -2,6 +2,8 @@ topology: AF-RadDz3-Mn-01.pdb
 trajectory: NJ-1-AF-RadDz3-Mn-01.xtc
 mobile: "resname MN"
 output: mn1_sites.csv
+condition: RadDz3_1Mn
+replica: rep1
 cutoff: 8.0
 start:
 stop:
