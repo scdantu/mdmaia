@@ -6,6 +6,8 @@ cutoff: 8.0
 start:
 stop:
 step: 100
+coordinates: aligned
+align_selection: "nucleic and name P and (resid 6:20 or resid 77:113)"
 targets:
   - label: G22
     selection: "nucleic and resid 22 and name P"

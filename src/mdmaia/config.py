@@ -30,6 +30,8 @@ class CollectionWorkflow:
     start: int | None = None
     stop: int | None = None
     step: int | None = None
+    coordinates: str = "local"
+    align_selection: str | None = None
 
 
 def read_config(path: str | Path) -> dict[str, Any]:
@@ -58,6 +60,8 @@ def parse_collection_config(path: str | Path) -> CollectionWorkflow:
         start=data.get("start"),
         stop=data.get("stop"),
         step=data.get("step"),
+        coordinates=data.get("coordinates", "local"),
+        align_selection=data.get("align_selection"),
     )
 
 
@@ -83,6 +87,8 @@ def collect_from_config(path: str | Path) -> pd.DataFrame:
             stop=workflow.stop,
             step=workflow.step,
             target_label=target.label,
+            coordinates=workflow.coordinates,
+            align_selection=workflow.align_selection,
         )
         frames.append(collect_local_positions(config))
     non_empty = [frame for frame in frames if not frame.empty]

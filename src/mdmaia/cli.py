@@ -34,6 +34,17 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--start", type=int, default=None, help="First frame")
     collect.add_argument("--stop", type=int, default=None, help="Stop frame")
     collect.add_argument("--step", type=int, default=None, help="Frame stride")
+    collect.add_argument(
+        "--coordinates",
+        choices=["local", "aligned"],
+        default="local",
+        help="Write target-centred local vectors or frame-aligned coordinates",
+    )
+    collect.add_argument(
+        "--align-selection",
+        default=None,
+        help="MDAnalysis selection used to align each frame to the first frame",
+    )
     collect.add_argument("--output", "-o", required=True, help="Output CSV or Parquet table")
     collect.set_defaults(func=collect_from_args)
 
