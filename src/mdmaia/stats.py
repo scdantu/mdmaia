@@ -178,6 +178,118 @@ def residence_times(
     return pd.DataFrame(rows)
 
 
+def cluster_residence_summary(
+    df: pd.DataFrame,
+    frame_step_ps: float | None = None,
+    frame_stride: int | None = None,
+) -> pd.DataFrame:
+    """Occupancy and residence-time summary for assigned contact clusters.
+
+    Expects a ``cluster_id`` column. Cluster ``-1`` is treated as noise and
+    excluded from the summary.
+    """
+
+    if df.empty or "cluster_id" not in df.columns:
+        return pd.DataFrame(
+            columns=[
+                "cluster_id",
+                "n_points",
+                "n_frames_occupied",
+                "occupancy",
+                "mean_mobile_count",
+                "max_mobile_count",
+                "n_residence_events",
+                "mean_residence_ps",
+                "max_residence_ps",
+                "dominant_target_label",
+            ]
+        )
+
+    clustered = df[df["cluster_id"] >= 0].copy()
+    if clustered.empty:
+        return pd.DataFrame(
+            columns=[
+                "cluster_id",
+                "n_points",
+                "n_frames_occupied",
+                "occupancy",
+                "mean_mobile_count",
+                "max_mobile_count",
+                "n_residence_events",
+                "mean_residence_ps",
+                "max_residence_ps",
+                "dominant_target_label",
+            ]
+        )
+
+    total_frames = df["frame"].nunique()
+    frame_counts = (
+        clustered.groupby(["cluster_id", "frame"], observed=True)["mobile_index"]
+        .nunique()
+        .reset_index(name="mobile_count")
+    )
+    occ = (
+        frame_counts.groupby("cluster_id", observed=True)
+        .agg(
+            n_frames_occupied=("frame", "nunique"),
+            mean_mobile_count=("mobile_count", "mean"),
+            max_mobile_count=("mobile_count", "max"),
+        )
+        .reset_index()
+    )
+    occ["occupancy"] = occ["n_frames_occupied"] / total_frames
+
+    point_counts = clustered.groupby("cluster_id", observed=True).size().rename("n_points")
+    dominant_targets = (
+        clustered.groupby(["cluster_id", "target_label"], observed=True)
+        .size()
+        .reset_index(name="n")
+        .sort_values(["cluster_id", "n"], ascending=[True, False])
+        .drop_duplicates("cluster_id")
+        .set_index("cluster_id")["target_label"]
+        .rename("dominant_target_label")
+    )
+
+    residence_input = clustered.copy()
+    residence_input["target_label"] = residence_input["cluster_id"].astype(str)
+    runs = residence_times(residence_input, frame_step_ps=frame_step_ps, frame_stride=frame_stride)
+    if runs.empty:
+        res_summary = pd.DataFrame(
+            columns=["cluster_id", "n_residence_events", "mean_residence_ps", "max_residence_ps"]
+        )
+    else:
+        runs["cluster_id"] = runs["target_label"].astype(int)
+        res_summary = (
+            runs.groupby("cluster_id", observed=True)
+            .agg(
+                n_residence_events=("n_frames", "size"),
+                mean_residence_ps=("duration_ps", "mean"),
+                max_residence_ps=("duration_ps", "max"),
+            )
+            .reset_index()
+        )
+
+    result = (
+        occ.merge(point_counts.reset_index(), on="cluster_id", how="left")
+        .merge(res_summary, on="cluster_id", how="left")
+        .merge(dominant_targets.reset_index(), on="cluster_id", how="left")
+    )
+    return result[
+        [
+            "cluster_id",
+            "n_points",
+            "n_frames_occupied",
+            "occupancy",
+            "mean_mobile_count",
+            "max_mobile_count",
+            "n_residence_events",
+            "mean_residence_ps",
+            "max_residence_ps",
+            "dominant_target_label",
+        ]
+    ].sort_values(["occupancy", "n_points"], ascending=[False, False])
+
+
 def _infer_frame_stride(frames: pd.Series) -> int:
     unique_frames = sorted(set(int(x) for x in frames))
     if len(unique_frames) < 2:
@@ -218,5 +330,20 @@ def residence_file(
     frame_stride: int | None = None,
 ) -> pd.DataFrame:
     result = residence_times(read_table(input_path), frame_step_ps=frame_step_ps, frame_stride=frame_stride)
+    write_table(result, output_path)
+    return result
+
+
+def cluster_residence_file(
+    input_path: str,
+    output_path: str,
+    frame_step_ps: float | None = None,
+    frame_stride: int | None = None,
+) -> pd.DataFrame:
+    result = cluster_residence_summary(
+        read_table(input_path),
+        frame_step_ps=frame_step_ps,
+        frame_stride=frame_stride,
+    )
     write_table(result, output_path)
     return result

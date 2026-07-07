@@ -13,7 +13,13 @@ from .features import features_file
 from .plot import plot_cooccupancy, plot_occupancy, write_feature_matrix
 from .sites import cluster_sites_file
 from .stats import stats_file
-from .stats import cooccupancy_file, conditional_file, multi_occupancy_file, residence_file
+from .stats import (
+    cluster_residence_file,
+    cooccupancy_file,
+    conditional_file,
+    multi_occupancy_file,
+    residence_file,
+)
 from .states import classify_file, state_summary_file
 
 
@@ -125,8 +131,41 @@ def build_parser() -> argparse.ArgumentParser:
     sites.add_argument("--output", "-o", required=True, help="Output CSV/Parquet table")
     sites.add_argument("--eps", type=float, default=1.0, help="DBSCAN radius")
     sites.add_argument("--min-samples", type=int, default=20, help="DBSCAN minimum samples")
+    sites.add_argument(
+        "--assign-output",
+        default=None,
+        help="Optional output table containing original contacts plus cluster_id",
+    )
     sites.set_defaults(
-        func=lambda args: cluster_sites_file(args.input, args.output, args.eps, args.min_samples)
+        func=lambda args: cluster_sites_file(
+            args.input,
+            args.output,
+            args.eps,
+            args.min_samples,
+            args.assign_output,
+        )
+    )
+
+    cluster_stats = sub.add_parser(
+        "cluster-stats",
+        help="Summarise occupancy and residence times for assigned clusters",
+    )
+    cluster_stats.add_argument("--input", "-i", required=True, help="Cluster-assigned contact table")
+    cluster_stats.add_argument("--output", "-o", required=True, help="Output CSV/Parquet table")
+    cluster_stats.add_argument("--frame-step-ps", type=float, default=None, help="Time per analysed frame")
+    cluster_stats.add_argument(
+        "--frame-stride",
+        type=int,
+        default=None,
+        help="Frame-number stride; inferred if omitted",
+    )
+    cluster_stats.set_defaults(
+        func=lambda args: cluster_residence_file(
+            args.input,
+            args.output,
+            args.frame_step_ps,
+            args.frame_stride,
+        )
     )
 
     classify = sub.add_parser("classify", help="Classify distance-based interaction states")

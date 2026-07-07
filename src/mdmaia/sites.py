@@ -20,6 +20,33 @@ def cluster_sites(
         return pd.DataFrame(columns=["site_id", "x", "y", "z", "n_points", "fraction"])
     coords = df[["x", "y", "z"]].to_numpy(dtype=float)
     labels = _radius_cluster(coords, eps=eps, min_samples=min_samples)
+    return summarize_clusters(df, labels)
+
+
+def assign_clusters(
+    df: pd.DataFrame,
+    eps: float = 1.0,
+    min_samples: int = 20,
+) -> pd.DataFrame:
+    """Return input contact rows with a ``cluster_id`` column."""
+
+    if df.empty:
+        out = df.copy()
+        out["cluster_id"] = pd.Series(dtype=int)
+        return out
+    coords = df[["x", "y", "z"]].to_numpy(dtype=float)
+    labels = _radius_cluster(coords, eps=eps, min_samples=min_samples)
+    out = df.copy()
+    out["cluster_id"] = labels
+    return out
+
+
+def summarize_clusters(df: pd.DataFrame, labels: np.ndarray) -> pd.DataFrame:
+    """Summarise cluster centres and point counts."""
+
+    if df.empty:
+        return pd.DataFrame(columns=["site_id", "x", "y", "z", "n_points", "fraction"])
+    coords = df[["x", "y", "z"]].to_numpy(dtype=float)
     rows = []
     total = len(labels)
     for label in sorted(set(labels)):
@@ -84,7 +111,12 @@ def cluster_sites_file(
     output_path: str,
     eps: float = 1.0,
     min_samples: int = 20,
+    assign_output: str | None = None,
 ) -> pd.DataFrame:
-    result = cluster_sites(read_table(input_path), eps=eps, min_samples=min_samples)
+    df = read_table(input_path)
+    assigned = assign_clusters(df, eps=eps, min_samples=min_samples)
+    result = summarize_clusters(df, assigned["cluster_id"].to_numpy(dtype=int))
     write_table(result, output_path)
+    if assign_output:
+        write_table(assigned, assign_output)
     return result

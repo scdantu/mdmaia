@@ -2,9 +2,9 @@ import pandas as pd
 
 from mdmaia.collect import COLLECT_COLUMNS
 from mdmaia.features import frame_features
-from mdmaia.sites import cluster_sites
+from mdmaia.sites import assign_clusters, cluster_sites
 from mdmaia.states import classify_distance_states, state_summary
-from mdmaia.stats import cooccupancy_matrix, residence_times
+from mdmaia.stats import cluster_residence_summary, cooccupancy_matrix, residence_times
 
 
 def toy_table():
@@ -67,6 +67,23 @@ def test_site_clustering():
     )
     sites = cluster_sites(df, eps=0.3, min_samples=2)
     assert len(sites) == 2
+
+
+def test_cluster_assignment_and_residence_summary():
+    df = pd.DataFrame(
+        [
+            {"frame": 0, "target_label": "A", "mobile_index": 1, "x": 0.0, "y": 0.0, "z": 0.0},
+            {"frame": 100, "target_label": "A", "mobile_index": 1, "x": 0.1, "y": 0.0, "z": 0.0},
+            {"frame": 200, "target_label": "A", "mobile_index": 1, "x": 0.2, "y": 0.0, "z": 0.0},
+            {"frame": 0, "target_label": "B", "mobile_index": 2, "x": 5.0, "y": 5.0, "z": 5.0},
+            {"frame": 100, "target_label": "B", "mobile_index": 2, "x": 5.1, "y": 5.0, "z": 5.0},
+        ]
+    )
+    assigned = assign_clusters(df, eps=0.4, min_samples=2)
+    assert "cluster_id" in assigned.columns
+    summary = cluster_residence_summary(assigned, frame_step_ps=2000.0)
+    assert len(summary) == 2
+    assert summary["max_residence_ps"].max() == 6000.0
 
 
 def test_empty_collect_table_has_schema():
