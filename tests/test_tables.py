@@ -1,5 +1,7 @@
 import pandas as pd
+import pytest
 
+from mdmaia.align import align_site_centroids, fit_transform, transform_points
 from mdmaia.collect import COLLECT_COLUMNS
 from mdmaia.features import frame_features
 from mdmaia.sites import assign_clusters, cluster_sites, consensus_sites
@@ -164,6 +166,67 @@ def test_consensus_sites_groups_local_clusters():
     major = summary.sort_values("n_points_total", ascending=False).iloc[0]
     assert major["n_replicas"] == 2
     assert major["dominant_target_label"] == "site1"
+
+
+def test_fit_transform_maps_mobile_to_reference():
+    reference = pd.DataFrame(
+        {
+            "x": [0.0, 1.0, 0.0, 0.0],
+            "y": [0.0, 0.0, 1.0, 0.0],
+            "z": [0.0, 0.0, 0.0, 1.0],
+        }
+    )[["x", "y", "z"]].to_numpy()
+    mobile = reference + [10.0, -5.0, 2.0]
+    rotation, translation = fit_transform(mobile, reference)
+    fitted = transform_points(mobile, rotation, translation)
+    assert fitted == pytest.approx(reference)
+
+
+def test_align_site_centroids_uses_structure_column(tmp_path):
+    reference_pdb = tmp_path / "ref.pdb"
+    mobile_pdb = tmp_path / "mobile.pdb"
+    reference_pdb.write_text(
+        "\n".join(
+            [
+                "ATOM      1  P    DG A   1       0.000   0.000   0.000  1.00  0.00           P",
+                "ATOM      2  P    DG A   2       1.000   0.000   0.000  1.00  0.00           P",
+                "ATOM      3  P    DG A   3       0.000   1.000   0.000  1.00  0.00           P",
+                "ATOM      4  P    DG A   4       0.000   0.000   1.000  1.00  0.00           P",
+                "END",
+            ]
+        )
+        + "\n"
+    )
+    mobile_pdb.write_text(
+        "\n".join(
+            [
+                "ATOM      1  P    DG A   1      10.000  -5.000   2.000  1.00  0.00           P",
+                "ATOM      2  P    DG A   2      11.000  -5.000   2.000  1.00  0.00           P",
+                "ATOM      3  P    DG A   3      10.000  -4.000   2.000  1.00  0.00           P",
+                "ATOM      4  P    DG A   4      10.000  -5.000   3.000  1.00  0.00           P",
+                "END",
+            ]
+        )
+        + "\n"
+    )
+    df = pd.DataFrame(
+        [
+            {
+                "structure": str(mobile_pdb),
+                "x": 11.0,
+                "y": -4.0,
+                "z": 3.0,
+            }
+        ]
+    )
+    aligned, transforms = align_site_centroids(
+        df,
+        structure_column="structure",
+        reference_structure=reference_pdb,
+        selection="name P",
+    )
+    assert aligned[["x", "y", "z"]].iloc[0].to_list() == pytest.approx([1.0, 1.0, 1.0])
+    assert transforms["alignment_rmsd"].iloc[0] == pytest.approx(0.0)
 
 
 def test_empty_collect_table_has_schema():

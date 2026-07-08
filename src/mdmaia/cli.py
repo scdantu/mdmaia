@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 
+from .align import align_site_centroids_file
 from .compare import compare_occupancy_file, merge_condition_tables
 from .config import collect_from_config
 from .collect import collect_from_args
@@ -198,6 +199,43 @@ def build_parser() -> argparse.ArgumentParser:
             args.min_samples,
             args.mapping_output,
             args.by_condition,
+        )
+    )
+
+    align_sites = sub.add_parser(
+        "align-sites",
+        help="Transform local site centroids into a common structure/centroid frame",
+    )
+    align_sites.add_argument("--input", "-i", required=True, help="Input local cluster table")
+    align_sites.add_argument("--output", "-o", required=True, help="Aligned output table")
+    align_sites.add_argument(
+        "--structure-column",
+        default="structure",
+        help="Column containing centroid/structure paths for each row",
+    )
+    align_sites.add_argument(
+        "--reference-structure",
+        required=True,
+        help="Reference centroid/structure used as the shared coordinate frame",
+    )
+    align_sites.add_argument(
+        "--selection",
+        required=True,
+        help="MDAnalysis atom selection used for structural alignment",
+    )
+    align_sites.add_argument(
+        "--transforms-output",
+        default=None,
+        help="Optional table with one fitted transform per structure",
+    )
+    align_sites.set_defaults(
+        func=lambda args: align_site_centroids_file(
+            args.input,
+            args.output,
+            structure_column=args.structure_column,
+            reference_structure=args.reference_structure,
+            selection=args.selection,
+            transforms_output=args.transforms_output,
         )
     )
 
