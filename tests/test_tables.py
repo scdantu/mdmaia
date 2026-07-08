@@ -2,7 +2,7 @@ import pandas as pd
 
 from mdmaia.collect import COLLECT_COLUMNS
 from mdmaia.features import frame_features
-from mdmaia.sites import assign_clusters, cluster_sites
+from mdmaia.sites import assign_clusters, cluster_sites, consensus_sites
 from mdmaia.states import classify_distance_states, state_summary
 from mdmaia.stats import (
     cluster_residence_summary,
@@ -115,6 +115,55 @@ def test_cluster_assignment_and_residence_summary():
     summary = cluster_residence_summary(assigned, frame_step_ps=2000.0)
     assert len(summary) == 2
     assert summary["max_residence_ps"].max() == 6000.0
+
+
+def test_consensus_sites_groups_local_clusters():
+    df = pd.DataFrame(
+        [
+            {
+                "condition": "A",
+                "replica": "r1",
+                "site_id": 0,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "n_points": 10,
+                "dominant_target_label": "site1",
+                "occupancy": 1.0,
+                "max_residence_ps": 100.0,
+            },
+            {
+                "condition": "A",
+                "replica": "r2",
+                "site_id": 0,
+                "x": 0.5,
+                "y": 0.0,
+                "z": 0.0,
+                "n_points": 20,
+                "dominant_target_label": "site1",
+                "occupancy": 0.8,
+                "max_residence_ps": 200.0,
+            },
+            {
+                "condition": "A",
+                "replica": "r3",
+                "site_id": 1,
+                "x": 10.0,
+                "y": 0.0,
+                "z": 0.0,
+                "n_points": 5,
+                "dominant_target_label": "site2",
+                "occupancy": 0.2,
+                "max_residence_ps": 50.0,
+            },
+        ]
+    )
+    summary, mapping = consensus_sites(df, eps=1.0)
+    assert len(summary) == 2
+    assert mapping["consensus_site_id"].nunique() == 2
+    major = summary.sort_values("n_points_total", ascending=False).iloc[0]
+    assert major["n_replicas"] == 2
+    assert major["dominant_target_label"] == "site1"
 
 
 def test_empty_collect_table_has_schema():

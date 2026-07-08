@@ -11,7 +11,7 @@ from .density import density_file
 from .export import contact_pdb_file, site_pdb_file, write_pymol_density_script
 from .features import features_file
 from .plot import plot_cooccupancy, plot_occupancy, write_feature_matrix
-from .sites import cluster_sites_file
+from .sites import cluster_sites_file, consensus_sites_file
 from .stats import stats_file
 from .stats import (
     cluster_residence_file,
@@ -173,6 +173,31 @@ def build_parser() -> argparse.ArgumentParser:
             args.output,
             args.frame_step_ps,
             args.frame_stride,
+        )
+    )
+
+    consensus = sub.add_parser(
+        "consensus-sites",
+        help="Group local hotspot centroids into consensus sites across replicas/conditions",
+    )
+    consensus.add_argument("--input", "-i", required=True, help="Input local cluster summary table")
+    consensus.add_argument("--output", "-o", required=True, help="Consensus site summary table")
+    consensus.add_argument("--eps", type=float, default=3.0, help="Consensus clustering radius")
+    consensus.add_argument("--min-samples", type=int, default=1, help="Minimum local clusters per consensus site")
+    consensus.add_argument("--mapping-output", default=None, help="Optional local-to-consensus mapping table")
+    consensus.add_argument(
+        "--by-condition",
+        action="store_true",
+        help="Build separate consensus sites within each condition",
+    )
+    consensus.set_defaults(
+        func=lambda args: consensus_sites_file(
+            args.input,
+            args.output,
+            args.eps,
+            args.min_samples,
+            args.mapping_output,
+            args.by_condition,
         )
     )
 

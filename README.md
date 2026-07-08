@@ -164,6 +164,22 @@ mdmaia cluster-stats \
   --output mn_cluster_residence.csv
 ```
 
+Map local hotspot clusters from multiple replicas or DNA-conformation clusters
+onto consensus Mn²⁺ sites in a shared aligned coordinate frame:
+
+```bash
+mdmaia consensus-sites \
+  --input all_local_clusters_enriched.csv \
+  --eps 8.0 \
+  --output consensus_sites.csv \
+  --mapping-output local_to_consensus.csv \
+  --by-condition
+```
+
+The input should contain one row per local hotspot with coordinates in a common
+reference frame. Optional columns such as `condition`, `replica`, `n_points`,
+`occupancy`, and `max_residence_ps` are preserved or summarised.
+
 If `condition` and `replica` columns are present, statistics are calculated
 within each condition/replica rather than pooling all rows.
 
@@ -259,6 +275,8 @@ mdmaia residence
 mdmaia features
 mdmaia feature-matrix
 mdmaia sites
+mdmaia cluster-stats
+mdmaia consensus-sites
 mdmaia classify
 mdmaia state-summary
 mdmaia merge-conditions
